@@ -5,6 +5,10 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VisionImageViewer", "src\VisionImageViewer\VisionImageViewer.csproj", "{7A1E5B0C-3D42-4F6A-9B1E-0C5D8A2F4E11}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VisionImageViewer.OpenCvSharp", "src\VisionImageViewer.OpenCvSharp\VisionImageViewer.OpenCvSharp.csproj", "{2C9F4D7E-6B18-4A35-8E0D-91F3A7B6C522}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VisionImageViewer.Demo", "demo\VisionImageViewer.Demo\VisionImageViewer.Demo.csproj", "{B5D3E8A1-0F27-4C9B-A64E-3E7C1D9F8A33}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VisionImageViewer.Checks", "tests\VisionImageViewer.Checks\VisionImageViewer.Checks.csproj", "{E8A6C2F4-9D31-4B57-B2A8-5F0E7C3D6B44}"
 EndProject
 Global
@@ -17,6 +21,14 @@ Global
 		{7A1E5B0C-3D42-4F6A-9B1E-0C5D8A2F4E11}.Debug|x64.Build.0 = Debug|Any CPU
 		{7A1E5B0C-3D42-4F6A-9B1E-0C5D8A2F4E11}.Release|x64.ActiveCfg = Release|Any CPU
 		{7A1E5B0C-3D42-4F6A-9B1E-0C5D8A2F4E11}.Release|x64.Build.0 = Release|Any CPU
+		{2C9F4D7E-6B18-4A35-8E0D-91F3A7B6C522}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{2C9F4D7E-6B18-4A35-8E0D-91F3A7B6C522}.Debug|x64.Build.0 = Debug|Any CPU
+		{2C9F4D7E-6B18-4A35-8E0D-91F3A7B6C522}.Release|x64.ActiveCfg = Release|Any CPU
+		{2C9F4D7E-6B18-4A35-8E0D-91F3A7B6C522}.Release|x64.Build.0 = Release|Any CPU
+		{B5D3E8A1-0F27-4C9B-A64E-3E7C1D9F8A33}.Debug|x64.ActiveCfg = Debug|x64
+		{B5D3E8A1-0F27-4C9B-A64E-3E7C1D9F8A33}.Debug|x64.Build.0 = Debug|x64
+		{B5D3E8A1-0F27-4C9B-A64E-3E7C1D9F8A33}.Release|x64.ActiveCfg = Release|x64
+		{B5D3E8A1-0F27-4C9B-A64E-3E7C1D9F8A33}.Release|x64.Build.0 = Release|x64
 		{E8A6C2F4-9D31-4B57-B2A8-5F0E7C3D6B44}.Debug|x64.ActiveCfg = Debug|x64
 		{E8A6C2F4-9D31-4B57-B2A8-5F0E7C3D6B44}.Debug|x64.Build.0 = Debug|x64
 		{E8A6C2F4-9D31-4B57-B2A8-5F0E7C3D6B44}.Release|x64.ActiveCfg = Release|x64

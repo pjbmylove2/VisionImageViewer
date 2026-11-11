@@ -43,6 +43,7 @@ namespace VisionImageViewer.Checks
                         ViewChecks.Input();
                         FileChecks.Overlays(artifacts);
                         FileChecks.Files(artifacts);
+                        AdapterChecks.Run(artifacts);
                         StreamChecks.LastFrame();
                         StreamChecks.QueuePolicy();
                         StreamChecks.ThreadStress(1000);

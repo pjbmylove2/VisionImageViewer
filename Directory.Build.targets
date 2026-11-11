@@ -1,0 +1,11 @@
+<Project>
+  <!--
+    OpenCvSharp4 패키지에 들어 있는 코드 분석기는 더 최신 컴파일러용이라
+    VS2022 일부 버전에서 경고(CS9057)만 내고 동작하지 않습니다. 빌드에서 제외합니다.
+  -->
+  <Target Name="RemoveOpenCvSharpAnalyzer" BeforeTargets="CoreCompile">
+    <ItemGroup>
+      <Analyzer Remove="@(Analyzer)" Condition="'%(Filename)' == 'OpenCvSharp.Analyzers'" />
+    </ItemGroup>
+  </Target>
+</Project>
