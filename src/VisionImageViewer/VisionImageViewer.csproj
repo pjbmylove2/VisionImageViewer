@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{7A1E5B0C-3D42-4F6A-9B1E-0C5D8A2F4E11}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>VisionImageViewer</RootNamespace>
+    <AssemblyName>VisionImageViewer</AssemblyName>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <Deterministic>true</Deterministic>
+    <LangVersion>7.3</LangVersion>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <WarningLevel>4</WarningLevel>
+    <ErrorReport>prompt</ErrorReport>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DocumentationFile>bin\Debug\VisionImageViewer.xml</DocumentationFile>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <DocumentationFile>bin\Release\VisionImageViewer.xml</DocumentationFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="FrameBuffer.cs" />
+    <Compile Include="FramePool.cs" />
+    <Compile Include="ImageFileCodec.cs" />
+    <Compile Include="ImageViewer.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="ImageViewer.Files.cs">
+      <DependentUpon>ImageViewer.cs</DependentUpon>
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="ImageViewer.Input.cs">
+      <DependentUpon>ImageViewer.cs</DependentUpon>
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="ImageViewer.Render.cs">
+      <DependentUpon>ImageViewer.cs</DependentUpon>
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="ImageViewerOptions.cs" />
+    <Compile Include="NativeMethods.cs" />
+    <Compile Include="Overlay\OverlayItem.cs" />
+    <Compile Include="PixelConverter.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ViewerStrings.cs" />
+    <Compile Include="ViewerTypes.cs" />
+    <Compile Include="ViewTransform.cs" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>
