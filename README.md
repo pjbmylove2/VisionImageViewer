@@ -82,3 +82,7 @@ VisionImageViewer.Checks.exe bench          성능 측정 표 출력 (약 2분, 
 VisionImageViewer.Checks.exe soak 1000000   100만 프레임 메모리·핸들 누수 확인
 VisionImageViewer.Checks.exe stress 1000    여러 스레드 동시 입력 + 창 닫기 반복
 ```
+
+## 라이선스
+
+[MIT](LICENSE). 어댑터가 참조하는 OpenCvSharp4는 Apache-2.0 라이선스입니다.
