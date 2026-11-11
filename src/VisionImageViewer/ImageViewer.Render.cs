@@ -12,7 +12,7 @@ namespace VisionImageViewer
         private const double PixelGridMinScale = 8.0;
 
         private IntPtr _bitmapInfo;                                 // BITMAPINFOHEADER + 회색 팔레트 256개
-        private readonly FrameBuffer _viewBuffer = new FrameBuffer(); // 16bit 영상을 화면용 8bit로 바꿔 담는 버퍼
+        private readonly FrameBuffer _viewBuffer = new FrameBuffer(); // 보이는 픽셀만 담는 화면 크기 버퍼
         private int[] _xMap;                                        // 화면 X → 이미지 X 대응표
         private readonly OverlayResources _overlayResources = new OverlayResources();
         private SolidBrush _backBrush;
@@ -105,13 +105,13 @@ namespace VisionImageViewer
                 IntPtr hdc = g.GetHdc();
                 try
                 {
-                    if (frame.Format == StoredFormat.Gray16)
+                    if (UseDirectBlit(frame, t))
                     {
-                        BlitSampled16(hdc, frame, t, client.Width, client.Height);
+                        BlitDirect(hdc, frame, t, client.Width, client.Height);
                     }
                     else
                     {
-                        BlitDirect(hdc, frame, t, client.Width, client.Height);
+                        BlitSampled(hdc, frame, t, client.Width, client.Height);
                     }
                 }
                 finally
@@ -274,10 +274,32 @@ namespace VisionImageViewer
         }
 
         /// <summary>
-        /// 16bit 흑백 영상: 화면에 보이는 픽셀만 골라 8bit로 줄여 화면 크기 버퍼에 담은 뒤 그립니다.
-        /// 원본 16bit 값은 프레임 버퍼에 그대로 남아 픽셀 값 표시에 쓰입니다.
+        /// 어느 경로로 그릴지 고릅니다(실측 기준, docs/Performance.ko.md).
+        /// - 16bit: 화면용 8bit로 바꿔야 하므로 항상 샘플링.
+        /// - 24bit 컬러: GDI의 24bit→화면 변환이 느려서 샘플링(보이는 픽셀만 32bit로 변환).
+        /// - 축소 + Smooth: GDI의 평균 축소(HALFTONE)를 쓰기 위해 직접.
+        /// - 그 외 8bit 흑백/32bit: 변환이 없으므로 직접.
         /// </summary>
-        private unsafe void BlitSampled16(IntPtr hdc, FrameBuffer f, in ViewTransform t, int clientWidth, int clientHeight)
+        private bool UseDirectBlit(FrameBuffer f, in ViewTransform t)
+        {
+            if (f.Format == StoredFormat.Gray16)
+            {
+                return false;
+            }
+            bool shrinking = t.ScaleX < 1.0 || t.ScaleY < 1.0;
+            if (shrinking)
+            {
+                return _zoomOutQuality == ZoomOutQuality.Smooth;
+            }
+            return f.Format != StoredFormat.Bgr24;
+        }
+
+        /// <summary>
+        /// 화면에 보이는 픽셀만 골라 화면 크기 버퍼(흑백 8bit 또는 컬러 32bit)에 담은 뒤 1:1로 그립니다.
+        /// 처리량이 원본 크기가 아니라 화면 크기에 비례합니다. 16bit 영상은 여기서 상위 8bit로 줄이며,
+        /// 원본 값은 프레임 버퍼에 그대로 남아 픽셀 값 표시에 쓰입니다.
+        /// </summary>
+        private unsafe void BlitSampled(IntPtr hdc, FrameBuffer f, in ViewTransform t, int clientWidth, int clientHeight)
         {
             int left = Math.Max(t.OriginX, 0);
             int top = Math.Max(t.OriginY, 0);
@@ -290,33 +312,73 @@ namespace VisionImageViewer
                 return;
             }
 
-            _viewBuffer.Prepare(viewWidth, viewHeight, StoredFormat.Gray8, 8);
+            bool colorOutput = f.Format == StoredFormat.Bgr24 || f.Format == StoredFormat.Bgra32;
+            _viewBuffer.Prepare(viewWidth, viewHeight, colorOutput ? StoredFormat.Bgra32 : StoredFormat.Gray8, 8);
             if (_xMap == null || _xMap.Length < viewWidth)
             {
                 _xMap = new int[viewWidth];
             }
+            // 화면 X → 원본 줄 안에서의 바이트 위치
+            int sourceBytesPerPixel = f.BytesPerPixel;
             for (int i = 0; i < viewWidth; i++)
             {
-                _xMap[i] = Clamp((int)((left + i + 0.5 - t.OriginX) / t.ScaleX), 0, f.Width - 1);
+                int sx = Clamp((int)((left + i + 0.5 - t.OriginX) / t.ScaleX), 0, f.Width - 1);
+                _xMap[i] = f.Format == StoredFormat.Gray16 ? sx : sx * sourceBytesPerPixel;
             }
 
             int shift = f.BitDepth - 8;
+            int rowBytes = viewWidth * (colorOutput ? 4 : 1);
+            int previousSourceRow = -1;
             fixed (int* map = _xMap)
             {
                 for (int j = 0; j < viewHeight; j++)
                 {
                     int sy = Clamp((int)((top + j + 0.5 - t.OriginY) / t.ScaleY), 0, f.Height - 1);
-                    ushort* source = (ushort*)f.Row(sy);
                     byte* destination = _viewBuffer.Row(j);
-                    for (int i = 0; i < viewWidth; i++)
+                    if (sy == previousSourceRow)
                     {
-                        int value = source[map[i]] >> shift;
-                        destination[i] = (byte)(value > 255 ? 255 : value);
+                        // 확대 중에는 같은 원본 줄이 여러 번 나옵니다. 방금 만든 줄을 그대로 복사합니다.
+                        Buffer.MemoryCopy(_viewBuffer.Row(j - 1), destination, rowBytes, rowBytes);
+                        continue;
+                    }
+                    previousSourceRow = sy;
+                    byte* source = f.Row(sy);
+                    switch (f.Format)
+                    {
+                        case StoredFormat.Gray8:
+                            for (int i = 0; i < viewWidth; i++)
+                            {
+                                destination[i] = source[map[i]];
+                            }
+                            break;
+                        case StoredFormat.Gray16:
+                            ushort* source16 = (ushort*)source;
+                            for (int i = 0; i < viewWidth; i++)
+                            {
+                                int value = source16[map[i]] >> shift;
+                                destination[i] = (byte)(value > 255 ? 255 : value);
+                            }
+                            break;
+                        case StoredFormat.Bgr24:
+                            uint* color = (uint*)destination;
+                            for (int i = 0; i < viewWidth; i++)
+                            {
+                                byte* p = source + map[i];
+                                color[i] = (uint)(p[0] | (p[1] << 8) | (p[2] << 16));
+                            }
+                            break;
+                        default:
+                            uint* color32 = (uint*)destination;
+                            for (int i = 0; i < viewWidth; i++)
+                            {
+                                color32[i] = *(uint*)(source + map[i]);
+                            }
+                            break;
                     }
                 }
             }
 
-            PrepareBitmapInfo(viewWidth, viewHeight, 8);
+            PrepareBitmapInfo(viewWidth, viewHeight, colorOutput ? 32 : 8);
             NativeMethods.SetStretchBltMode(hdc, NativeMethods.ColorOnColor);
             NativeMethods.StretchDIBits(hdc, left, top, viewWidth, viewHeight, 0, 0, viewWidth, viewHeight,
                 _viewBuffer.Data, _bitmapInfo, NativeMethods.DibRgbColors, NativeMethods.SrcCopy);
